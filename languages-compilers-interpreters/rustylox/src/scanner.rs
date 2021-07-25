@@ -16,7 +16,7 @@ pub struct Scanner<'a> {
     pub chars: Peekable<Chars<'a>>,
 }
 
-fn reserved() -> HashMap<&'static str, TokenType> {
+pub fn default_reserved<'a>() -> HashMap<&'static str, TokenType> {
     let mut reserved = HashMap::new();
     reserved.insert("if", TokenType::If);
     reserved.insert("and", TokenType::And);
@@ -39,7 +39,7 @@ fn reserved() -> HashMap<&'static str, TokenType> {
 }
 
 impl<'a> Scanner<'a> {
-    pub fn new(source: &'a str) -> Self {
+    pub fn new(reserved: HashMap<&'static str, TokenType>, source: &'a str) -> Self {
         Self {
             source,
             tokens: Vec::new(),
@@ -47,7 +47,7 @@ impl<'a> Scanner<'a> {
             column: 0,
             current: 0,
             start: 0,
-            reserved: reserved(),
+            reserved: reserved,
             chars: source.chars().peekable(),
         }
     }
@@ -135,7 +135,7 @@ impl<'a> Scanner<'a> {
         }
 
         let mut token_type = TokenType::Identifier;
-        if let Some(reserved) = reserved().get(self.substring()) {
+        if let Some(reserved) = self.reserved.get(self.substring()) {
             token_type = reserved.clone();
         }
         self.add_token(token_type);
@@ -219,7 +219,6 @@ impl<'a> Scanner<'a> {
                     if c.is_digit(10) {
                         self.number();
                     } else if c.is_ascii_alphabetic() {
-                        println!("yooo");
                         self.identifier();
                     } else {
                         error(

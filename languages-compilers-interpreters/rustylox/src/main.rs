@@ -3,7 +3,7 @@ extern crate enum_display_derive;
 
 use clap::{App, Arg};
 use error::{error, ErrorKind};
-use scanner::Scanner;
+use scanner::{default_reserved, Scanner};
 use std::fs;
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
@@ -55,7 +55,7 @@ fn run_repl() {
 }
 
 fn run(source: String) {
-    let mut scanner = Scanner::new(source.as_str());
+    let mut scanner = Scanner::new(default_reserved(), source.as_str());
     match scanner.scan_tokens() {
         Ok(tokens) => {
             print!("[");

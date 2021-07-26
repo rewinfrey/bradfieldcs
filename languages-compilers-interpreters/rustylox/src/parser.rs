@@ -158,6 +158,10 @@ impl Parser {
     }
 
     fn error(&self, token: Token, message: &str) {
+        let mut msg = message.to_string();
+        if token.token_type == TokenType::EOF {
+            msg += " at end of input";
+        }
         error(
             token.line,
             token.column,

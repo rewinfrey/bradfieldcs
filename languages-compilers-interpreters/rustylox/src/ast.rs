@@ -5,7 +5,11 @@ use std::fmt;
 pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
-    Literal(Token),
+    Identifier(String),
+    BoolLiteral(bool),
+    NilLiteral,
+    NumberLiteral(f64),
+    StringLiteral(String),
     Unary(Token, Box<Expr>),
 }
 
@@ -19,11 +23,23 @@ impl fmt::Display for Expr {
             Expr::Grouping(expr) => {
                 let _ = write!(f, "group {}", expr);
             }
-            Expr::Literal(lit) => {
-                let _ = write!(f, "{}", lit.lexeme);
+            Expr::BoolLiteral(b) => {
+                let _ = write!(f, "{}", b);
+            }
+            Expr::NilLiteral => {
+                let _ = write!(f, "{}", String::from("nil"));
+            }
+            Expr::NumberLiteral(n) => {
+                let _ = write!(f, "{}", n);
+            }
+            Expr::StringLiteral(s) => {
+                let _ = write!(f, "{}", s);
             }
             Expr::Unary(op, expr) => {
                 let _ = write!(f, "{} {}", op, expr);
+            }
+            Expr::Identifier(s) => {
+                let _ = write!(f, "{}", s);
             }
         }
         write!(f, "{}", ")")

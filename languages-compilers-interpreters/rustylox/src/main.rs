@@ -4,15 +4,17 @@ extern crate enum_display_derive;
 use ast::Expr;
 use clap::{App, Arg, SubCommand};
 use error::{error, ErrorKind};
+use evaluator::evaluate;
 use parser::Parser;
 use scanner::{default_reserved, Scanner};
 use std::fs;
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
-use token::{Token, TokenType};
+use token::{Object, Token, TokenType};
 
 mod ast;
 mod error;
+mod evaluator;
 mod parser;
 mod scanner;
 mod token;
@@ -70,7 +72,11 @@ fn run(source: String) {
             print!("]\n");
             let mut parser = Parser::new(tokens);
             match parser.parse() {
-                Ok(ast) => println!("{}", ast),
+                Ok(ast) => {
+                    println!("{}", ast);
+                    println!("result: {:?}", evaluate(ast));
+                }
+
                 Err(_) => println!("{}", "invalid expression"),
             }
         }
@@ -82,23 +88,14 @@ fn run_ast() {
     // -123 * 45.67
     let expr = Expr::Binary(
         Box::new(Expr::Unary(
-            Token::new(TokenType::Minus, String::from("-"), 0, 0),
-            Box::new(Expr::Literal(Token::new(
-                TokenType::Number,
-                String::from("123"),
-                0,
-                0,
-            ))),
+            Token::new(TokenType::Minus, String::from("-"), 0, 0, None),
+            Box::new(Expr::NumberLiteral(123 as f64)),
         )),
-        Token::new(TokenType::Star, String::from("*"), 0, 0),
-        Box::new(Expr::Grouping(Box::new(Expr::Literal(Token::new(
-            TokenType::Number,
-            String::from("45.67"),
-            0,
-            0,
-        ))))),
+        Token::new(TokenType::Star, String::from("*"), 0, 0, None),
+        Box::new(Expr::Grouping(Box::new(Expr::NumberLiteral(45.67)))),
     );
     println!("{}", expr);
+    println!("result: {:?}", evaluate(expr));
 }
 
 fn main() {

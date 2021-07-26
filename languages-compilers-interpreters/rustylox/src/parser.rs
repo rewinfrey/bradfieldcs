@@ -1,6 +1,6 @@
 use super::ast::Expr;
 use super::error::{error, ErrorKind};
-use super::token::{Token, TokenType};
+use super::token::{Object, Token, TokenType};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -124,19 +124,52 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, ()> {
         if self.match_token(vec![TokenType::False]) {
-            return Ok(Expr::Literal(self.previous()));
+            if let Some(Object::Bool(b)) = self.previous().literal {
+                return Ok(Expr::BoolLiteral(b));
+            } else {
+                self.error(self.previous(), "Expected boolean");
+                return Err(());
+            }
         }
 
         if self.match_token(vec![TokenType::True]) {
-            return Ok(Expr::Literal(self.previous()));
+            if let Some(Object::Bool(b)) = self.previous().literal {
+                return Ok(Expr::BoolLiteral(b));
+            } else {
+                self.error(self.previous(), "Expected boolean");
+                return Err(());
+            }
         }
 
         if self.match_token(vec![TokenType::Nil]) {
-            return Ok(Expr::Literal(self.previous()));
+            return Ok(Expr::NilLiteral);
         }
 
-        if self.match_token(vec![TokenType::Number, TokenType::String]) {
-            return Ok(Expr::Literal(self.previous()));
+        if self.match_token(vec![TokenType::Number]) {
+            if let Some(Object::Number(n)) = self.previous().literal {
+                return Ok(Expr::NumberLiteral(n));
+            } else {
+                self.error(self.previous(), "Expected number");
+                return Err(());
+            }
+        }
+
+        if self.match_token(vec![TokenType::String]) {
+            if let Some(Object::String(s)) = self.previous().literal {
+                return Ok(Expr::StringLiteral(s));
+            } else {
+                self.error(self.previous(), "Expected string");
+                return Err(());
+            }
+        }
+
+        if self.match_token(vec![TokenType::Identifier]) {
+            if let Some(Object::Identifier(s)) = self.previous().literal {
+                return Ok(Expr::Identifier(s));
+            } else {
+                self.error(self.previous(), "Expected identifier");
+                return Err(());
+            }
         }
 
         if self.match_token(vec![TokenType::LeftParen]) {

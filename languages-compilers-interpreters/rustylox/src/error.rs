@@ -2,6 +2,7 @@
 pub enum ErrorKind {
     ScanError,
     ReadFileError,
+    ParseError,
 }
 
 impl std::fmt::Display for ErrorKind {
@@ -9,6 +10,7 @@ impl std::fmt::Display for ErrorKind {
         let error_kind = match self {
             ErrorKind::ScanError => "ScanError",
             ErrorKind::ReadFileError => "ReadFileError",
+            ErrorKind::ParseError => "ParseError",
         };
         write!(f, "Error: {}", error_kind)
     }

@@ -3,6 +3,7 @@ pub enum ErrorKind {
     ScanError,
     ReadFileError,
     ParseError,
+    EvaluatorError,
 }
 
 impl std::fmt::Display for ErrorKind {
@@ -11,6 +12,7 @@ impl std::fmt::Display for ErrorKind {
             ErrorKind::ScanError => "ScanError",
             ErrorKind::ReadFileError => "ReadFileError",
             ErrorKind::ParseError => "ParseError",
+            ErrorKind::EvaluatorError => "EvaluatorError",
         };
         write!(f, "Error: {}", error_kind)
     }

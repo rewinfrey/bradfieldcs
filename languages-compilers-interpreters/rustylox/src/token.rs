@@ -54,11 +54,21 @@ pub enum TokenType {
 }
 
 #[derive(Clone, Debug)]
-pub struct Object {}
+pub enum Object {
+    Identifier(String),
+    Number(f64),
+    Bool(bool),
+    String(String),
+}
 
 impl std::fmt::Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", "object")
+        match self {
+            Object::Identifier(identifier) => write!(f, "{}", identifier),
+            Object::Number(number) => write!(f, "{}", number),
+            Object::Bool(b) => write!(f, "{}", b),
+            Object::String(s) => write!(f, "{}", s),
+        }
     }
 }
 
@@ -72,11 +82,17 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, line: u32, column: u32) -> Token {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: String,
+        line: u32,
+        column: u32,
+        literal: Option<Object>,
+    ) -> Token {
         Token {
             token_type,
             lexeme,
-            literal: None,
+            literal,
             line,
             column,
         }

@@ -1,5 +1,5 @@
 use super::error::{error, ErrorKind};
-use super::token::{Token, TokenType};
+use super::token::{Object, Token, TokenType};
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
@@ -56,12 +56,13 @@ impl<'a> Scanner<'a> {
         return self.current >= (self.source.len() as u32);
     }
 
-    fn add_token(&mut self, token_type: TokenType) {
+    fn add_token(&mut self, token_type: TokenType, literal: Option<Object>) {
         self.tokens.push(Token::new(
             token_type,
             self.substring().to_string(),
             self.line,
             self.column,
+            literal,
         ));
     }
 
@@ -108,7 +109,10 @@ impl<'a> Scanner<'a> {
             }
 
             self.advance();
-            self.add_token(TokenType::String);
+            self.add_token(
+                TokenType::String,
+                Some(Object::String(self.substring().to_string())),
+            );
             break;
         }
     }
@@ -126,11 +130,14 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        self.add_token(TokenType::Number);
+        let number: f64 = self.substring().parse().unwrap();
+        self.add_token(TokenType::Number, Some(Object::Number(number)));
     }
 
     fn identifier(&mut self) {
-        while self.chars.peek().unwrap_or(&'❤').is_ascii_alphabetic() {
+        while self.chars.peek().unwrap_or(&'❤').is_ascii_alphabetic()
+            || *self.chars.peek().unwrap_or(&'❤') == '_'
+        {
             self.advance();
         }
 
@@ -138,22 +145,30 @@ impl<'a> Scanner<'a> {
         if let Some(reserved) = self.reserved.get(self.substring()) {
             token_type = reserved.clone();
         }
-        self.add_token(token_type);
+
+        match token_type {
+            TokenType::True => self.add_token(token_type, Some(Object::Bool(true))),
+            TokenType::False => self.add_token(token_type, Some(Object::Bool(false))),
+            _ => self.add_token(
+                token_type,
+                Some(Object::Identifier(self.substring().to_string())),
+            ),
+        }
     }
 
     fn scan_token(&mut self) {
         if let Some(c) = self.advance() {
             match c {
-                '(' => self.add_token(TokenType::LeftParen),
-                ')' => self.add_token(TokenType::RightParen),
-                '{' => self.add_token(TokenType::LeftBrace),
-                '}' => self.add_token(TokenType::RightBrace),
-                ',' => self.add_token(TokenType::Comma),
-                '.' => self.add_token(TokenType::Dot),
-                '-' => self.add_token(TokenType::Minus),
-                '+' => self.add_token(TokenType::Plus),
-                ';' => self.add_token(TokenType::Semicolon),
-                '*' => self.add_token(TokenType::Star),
+                '(' => self.add_token(TokenType::LeftParen, None),
+                ')' => self.add_token(TokenType::RightParen, None),
+                '{' => self.add_token(TokenType::LeftBrace, None),
+                '}' => self.add_token(TokenType::RightBrace, None),
+                ',' => self.add_token(TokenType::Comma, None),
+                '.' => self.add_token(TokenType::Dot, None),
+                '-' => self.add_token(TokenType::Minus, None),
+                '+' => self.add_token(TokenType::Plus, None),
+                ';' => self.add_token(TokenType::Semicolon, None),
+                '*' => self.add_token(TokenType::Star, None),
 
                 '!' => {
                     let token_type = if self.match_char('=') {
@@ -161,7 +176,7 @@ impl<'a> Scanner<'a> {
                     } else {
                         TokenType::Bang
                     };
-                    self.add_token(token_type);
+                    self.add_token(token_type, None);
                 }
                 '=' => {
                     let token_type = if self.match_char('=') {
@@ -169,7 +184,7 @@ impl<'a> Scanner<'a> {
                     } else {
                         TokenType::Equal
                     };
-                    self.add_token(token_type);
+                    self.add_token(token_type, None);
                 }
                 '<' => {
                     let token_type = if self.match_char('=') {
@@ -177,7 +192,7 @@ impl<'a> Scanner<'a> {
                     } else {
                         TokenType::Less
                     };
-                    self.add_token(token_type);
+                    self.add_token(token_type, None);
                 }
                 '>' => {
                     let token_type = if self.match_char('=') {
@@ -185,7 +200,7 @@ impl<'a> Scanner<'a> {
                     } else {
                         TokenType::Greater
                     };
-                    self.add_token(token_type);
+                    self.add_token(token_type, None);
                 }
 
                 '/' => {
@@ -201,7 +216,7 @@ impl<'a> Scanner<'a> {
                             }
                         }
                     } else {
-                        self.add_token(TokenType::Slash);
+                        self.add_token(TokenType::Slash, None);
                     }
                 }
 
@@ -228,7 +243,7 @@ impl<'a> Scanner<'a> {
                             String::from("Unknown character"),
                             ErrorKind::ScanError,
                         );
-                        self.add_token(TokenType::Unknown);
+                        self.add_token(TokenType::Unknown, None);
                     }
                 }
             }
@@ -245,6 +260,7 @@ impl<'a> Scanner<'a> {
             String::from(""),
             self.line,
             self.column,
+            None,
         ));
         Ok(self.tokens.clone())
     }

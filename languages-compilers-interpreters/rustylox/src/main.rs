@@ -4,6 +4,7 @@ extern crate enum_display_derive;
 use ast::Expr;
 use clap::{App, Arg, SubCommand};
 use error::{error, ErrorKind};
+use parser::Parser;
 use scanner::{default_reserved, Scanner};
 use std::fs;
 use std::io::{stdin, stdout, Write};
@@ -12,6 +13,7 @@ use token::{Token, TokenType};
 
 mod ast;
 mod error;
+mod parser;
 mod scanner;
 mod token;
 
@@ -62,10 +64,15 @@ fn run(source: String) {
     match scanner.scan_tokens() {
         Ok(tokens) => {
             print!("[");
-            for token in tokens {
+            for token in &tokens {
                 print!(" ({}) ", token);
             }
             print!("]\n");
+            let mut parser = Parser::new(tokens);
+            match parser.parse() {
+                Ok(ast) => println!("{}", ast),
+                Err(_) => println!("{}", "invalid expression"),
+            }
         }
         Err(e) => eprintln!("{}", e),
     }

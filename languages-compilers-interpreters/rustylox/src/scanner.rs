@@ -1,5 +1,5 @@
 use super::error::{error, ErrorKind};
-use super::token::{Object, Token, TokenType};
+use super::token::{Literal, Token, TokenType};
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
@@ -56,7 +56,7 @@ impl<'a> Scanner<'a> {
         return self.current >= (self.source.len() as u32);
     }
 
-    fn add_token(&mut self, token_type: TokenType, literal: Option<Object>) {
+    fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         self.tokens.push(Token::new(
             token_type,
             self.substring().to_string(),
@@ -111,7 +111,7 @@ impl<'a> Scanner<'a> {
             self.advance();
             self.add_token(
                 TokenType::String,
-                Some(Object::String(self.substring().to_string())),
+                Some(Literal::String(self.substring().to_string())),
             );
             break;
         }
@@ -131,7 +131,7 @@ impl<'a> Scanner<'a> {
         }
 
         let number: f64 = self.substring().parse().unwrap();
-        self.add_token(TokenType::Number, Some(Object::Number(number)));
+        self.add_token(TokenType::Number, Some(Literal::Number(number)));
     }
 
     fn identifier(&mut self) {
@@ -147,11 +147,11 @@ impl<'a> Scanner<'a> {
         }
 
         match token_type {
-            TokenType::True => self.add_token(token_type, Some(Object::Bool(true))),
-            TokenType::False => self.add_token(token_type, Some(Object::Bool(false))),
+            TokenType::True => self.add_token(token_type, Some(Literal::Bool(true))),
+            TokenType::False => self.add_token(token_type, Some(Literal::Bool(false))),
             _ => self.add_token(
                 token_type,
-                Some(Object::Identifier(self.substring().to_string())),
+                Some(Literal::Identifier(self.substring().to_string())),
             ),
         }
     }

@@ -10,7 +10,7 @@ use scanner::{default_reserved, Scanner};
 use std::fs;
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
-use token::{Object, Token, TokenType};
+use token::{Token, TokenType};
 
 mod ast;
 mod error;

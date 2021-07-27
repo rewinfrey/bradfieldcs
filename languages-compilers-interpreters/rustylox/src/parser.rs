@@ -1,6 +1,6 @@
 use super::ast::Expr;
 use super::error::{error, ErrorKind};
-use super::token::{Object, Token, TokenType};
+use super::token::{Literal, Token, TokenType};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -124,7 +124,7 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, ()> {
         if self.match_token(vec![TokenType::False]) {
-            if let Some(Object::Bool(b)) = self.previous().literal {
+            if let Some(Literal::Bool(b)) = self.previous().literal {
                 return Ok(Expr::BoolLiteral(b));
             } else {
                 self.error(self.previous(), "Expected boolean");
@@ -133,7 +133,7 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::True]) {
-            if let Some(Object::Bool(b)) = self.previous().literal {
+            if let Some(Literal::Bool(b)) = self.previous().literal {
                 return Ok(Expr::BoolLiteral(b));
             } else {
                 self.error(self.previous(), "Expected boolean");
@@ -146,7 +146,7 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::Number]) {
-            if let Some(Object::Number(n)) = self.previous().literal {
+            if let Some(Literal::Number(n)) = self.previous().literal {
                 return Ok(Expr::NumberLiteral(n));
             } else {
                 self.error(self.previous(), "Expected number");
@@ -155,7 +155,7 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::String]) {
-            if let Some(Object::String(s)) = self.previous().literal {
+            if let Some(Literal::String(s)) = self.previous().literal {
                 return Ok(Expr::StringLiteral(s));
             } else {
                 self.error(self.previous(), "Expected string");
@@ -164,7 +164,7 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::Identifier]) {
-            if let Some(Object::Identifier(s)) = self.previous().literal {
+            if let Some(Literal::Identifier(s)) = self.previous().literal {
                 return Ok(Expr::Identifier(s));
             } else {
                 self.error(self.previous(), "Expected identifier");

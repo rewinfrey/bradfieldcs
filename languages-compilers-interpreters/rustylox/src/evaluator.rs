@@ -1,5 +1,6 @@
 use super::ast::Expr;
 use super::error::{error, ErrorKind};
+use super::token::TokenType;
 use std::fmt::Display;
 
 #[derive(Debug, Display)]
@@ -40,13 +41,15 @@ impl Into<Option<bool>> for Value {
 pub fn evaluate(ast: Expr) -> Result<Value, ()> {
     match ast {
         Expr::Binary(l, op, r) => {
+            // To correctly implement this, I can use combinators that attempt to resolve an expr to a value for a given type,
+            // and continue until no more possible values are possible (which results in an error).
             let l_result: Option<f64> = evaluate(*l)?.into();
             let r_result: Option<f64> = evaluate(*r)?.into();
-            match op.lexeme.as_str() {
-                "+" => Ok(Value::Number(l_result.unwrap() + r_result.unwrap())),
-                "-" => Ok(Value::Number(l_result.unwrap() - r_result.unwrap())),
-                "*" => Ok(Value::Number(l_result.unwrap() * r_result.unwrap())),
-                "/" => Ok(Value::Number(l_result.unwrap() / r_result.unwrap())),
+            match op.token_type {
+                TokenType::Plus => Ok(Value::Number(l_result.unwrap() + r_result.unwrap())),
+                TokenType::Minus => Ok(Value::Number(l_result.unwrap() - r_result.unwrap())),
+                TokenType::Star => Ok(Value::Number(l_result.unwrap() * r_result.unwrap())),
+                TokenType::Slash => Ok(Value::Number(l_result.unwrap() / r_result.unwrap())),
                 _ => {
                     error(
                         op.line,
@@ -61,26 +64,38 @@ pub fn evaluate(ast: Expr) -> Result<Value, ()> {
         }
         Expr::Grouping(expr) => evaluate(*expr),
         Expr::NumberLiteral(n) => Ok(Value::Number(n)),
-        Expr::Unary(op, expr) => {
-            let unary: Option<f64> = evaluate(*expr)?.into();
-            match op.lexeme.as_str() {
-                "-" => Ok(Value::Number(-unary.unwrap())),
-                "+" => Ok(Value::Number(unary.unwrap())),
-                _ => {
-                    error(0, 0, 0, String::from("Unknown unary operator error"), ErrorKind::EvaluatorError);
-                    Err(())
-                }
+        Expr::BoolLiteral(b) => Ok(Value::Bool(b)),
+        Expr::Identifier(id) => Ok(Value::String(id)),
+        Expr::NilLiteral => Ok(Value::Nil),
+        Expr::Unary(op, expr) => match op.token_type {
+            TokenType::Plus => {
+                let unary: Option<f64> = evaluate(*expr)?.into();
+                Ok(Value::Number(-unary.unwrap()))
             }
-        }
+            TokenType::Bang => {
+                let unary: Option<bool> = evaluate(*expr)?.into();
+                Ok(Value::Bool(!unary.unwrap()))
+            }
+            _ => {
+                error(
+                    0,
+                    0,
+                    0,
+                    String::from("Unknown unary operator error"),
+                    ErrorKind::EvaluatorError,
+                );
+                Err(())
+            }
+        },
         _ => {
-            error(0, 0, 0, String::from("Unknown expression error"), ErrorKind::EvaluatorError);
+            error(
+                0,
+                0,
+                0,
+                String::from("Unknown expression error"),
+                ErrorKind::EvaluatorError,
+            );
             Err(())
         }
-        // Question: what is the best way to handle heterogeneous result types?
-        // Expr::Identifier(s) => Ok(0),
-        // Expr::BoolLiteral(bool) => Ok(bool),
-        // BoolLiteral(bool),
-        // NilLiteral,
-        // StringLiteral(String),
     }
 }

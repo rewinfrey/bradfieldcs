@@ -184,7 +184,7 @@ impl Parser {
 
     fn consume(&mut self, token_type: TokenType, message: &str) {
         if self.check(token_type) {
-            self.advance();
+            return self.advance();
         }
 
         self.error(self.peek(), message)

@@ -15,6 +15,18 @@ impl Parser {
         }
     }
 
+    /*
+    expression     → equality | let binding ;
+    equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+    let binding    -> identifier "=" expression ;
+    comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+    term           → factor ( ( "-" | "+" ) factor )* ;
+    factor         → unary ( ( "/" | "*" ) unary )* ;
+    unary          → ( "!" | "-" ) unary
+                | primary ;
+    primary        → NUMBER | STRING | "true" | "false" | "nil"
+                | "(" expression ")" ;
+    */
     pub fn parse(&mut self) -> Result<Expr, ()> {
         self.expression()
     }

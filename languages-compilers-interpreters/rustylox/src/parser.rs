@@ -47,42 +47,6 @@ impl Parser {
         expr
     }
 
-    fn advance(&mut self) {
-        if !self.at_end() {
-            self.current += 1;
-        }
-        self.previous();
-    }
-
-    fn previous(&self) -> Token {
-        self.tokens[self.current - 1].clone()
-    }
-
-    fn peek(&self) -> Token {
-        self.tokens[self.current].clone()
-    }
-
-    fn at_end(&self) -> bool {
-        self.tokens[self.current].token_type == TokenType::EOF
-    }
-
-    fn check(&self, token_type: TokenType) -> bool {
-        if self.at_end() {
-            return false;
-        }
-        self.peek().token_type == token_type
-    }
-
-    fn match_token(&mut self, token_types: Vec<TokenType>) -> bool {
-        for token_type in token_types {
-            if self.check(token_type) {
-                self.advance();
-                return true;
-            }
-        }
-        false
-    }
-
     fn comparison(&mut self) -> Result<Expr, ()> {
         let mut expr = self.term();
 
@@ -192,6 +156,44 @@ impl Parser {
 
         self.error(self.peek(), "Expect expression");
         Err(())
+    }
+
+    // Shared utilities between implementations.
+
+    fn advance(&mut self) {
+        if !self.at_end() {
+            self.current += 1;
+        }
+        self.previous();
+    }
+
+    fn previous(&self) -> Token {
+        self.tokens[self.current - 1].clone()
+    }
+
+    fn peek(&self) -> Token {
+        self.tokens[self.current].clone()
+    }
+
+    fn at_end(&self) -> bool {
+        self.tokens[self.current].token_type == TokenType::EOF
+    }
+
+    fn check(&self, token_type: TokenType) -> bool {
+        if self.at_end() {
+            return false;
+        }
+        self.peek().token_type == token_type
+    }
+
+    fn match_token(&mut self, token_types: Vec<TokenType>) -> bool {
+        for token_type in token_types {
+            if self.check(token_type) {
+                self.advance();
+                return true;
+            }
+        }
+        false
     }
 
     fn consume(&mut self, token_type: TokenType, message: &str) {

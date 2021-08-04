@@ -57,7 +57,8 @@ pub enum TokenType {
 pub enum Literal {
     Identifier(String),
     Number(f64),
-    Bool(bool),
+    True,
+    False,
     String(String),
 }
 
@@ -66,7 +67,8 @@ impl std::fmt::Display for Literal {
         match self {
             Literal::Identifier(identifier) => write!(f, "{}", identifier),
             Literal::Number(number) => write!(f, "{}", number),
-            Literal::Bool(b) => write!(f, "{}", b),
+            Literal::True => write!(f, "true"),
+            Literal::False => write!(f, "false"),
             Literal::String(s) => write!(f, "{}", s),
         }
     }

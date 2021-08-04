@@ -6,7 +6,8 @@ pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
     Identifier(String),
-    BoolLiteral(bool),
+    TrueLiteral,
+    FalseLiteral,
     NilLiteral,
     NumberLiteral(f64),
     StringLiteral(String),
@@ -23,8 +24,11 @@ impl fmt::Display for Expr {
             Expr::Grouping(expr) => {
                 let _ = write!(f, "group {}", expr);
             }
-            Expr::BoolLiteral(b) => {
-                let _ = write!(f, "{}", b);
+            Expr::FalseLiteral => {
+                let _ = write!(f, "false");
+            }
+            Expr::TrueLiteral => {
+                let _ = write!(f, "true");
             }
             Expr::NilLiteral => {
                 let _ = write!(f, "{}", String::from("nil"));

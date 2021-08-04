@@ -6,7 +6,8 @@ use std::fmt::Display;
 #[derive(Debug, Display)]
 pub enum Value {
     Nil,
-    Bool(bool),
+    True,
+    False,
     Number(f64),
     String(String),
 }
@@ -32,7 +33,8 @@ impl Into<Option<String>> for Value {
 impl Into<Option<bool>> for Value {
     fn into(self) -> Option<bool> {
         match self {
-            Value::Bool(b) => Some(b),
+            Value::True => Some(true),
+            Value::False => Some(false),
             _ => None,
         }
     }
@@ -63,8 +65,10 @@ pub fn evaluate(ast: Expr) -> Result<Value, ()> {
             }
         }
         Expr::Grouping(expr) => evaluate(*expr),
+        Expr::TrueLiteral => Ok(Value::True),
+        Expr::FalseLiteral => Ok(Value::False),
         Expr::NumberLiteral(n) => Ok(Value::Number(n)),
-        Expr::BoolLiteral(b) => Ok(Value::Bool(b)),
+        Expr::StringLiteral(s) => Ok(Value::String(s)),
         Expr::Identifier(id) => Ok(Value::String(id)),
         Expr::NilLiteral => Ok(Value::Nil),
         Expr::Unary(op, expr) => match op.token_type {
@@ -74,7 +78,10 @@ pub fn evaluate(ast: Expr) -> Result<Value, ()> {
             }
             TokenType::Bang => {
                 let unary: Option<bool> = evaluate(*expr)?.into();
-                Ok(Value::Bool(!unary.unwrap()))
+                match !unary.unwrap() {
+                    true => Ok(Value::True),
+                    false => Ok(Value::False),
+                }
             }
             _ => {
                 error(

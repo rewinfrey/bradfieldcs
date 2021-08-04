@@ -124,8 +124,8 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, ()> {
         if self.match_token(vec![TokenType::False]) {
-            if let Some(Literal::Bool(b)) = self.previous().literal {
-                return Ok(Expr::BoolLiteral(b));
+            if let Some(Literal::False) = self.previous().literal {
+                return Ok(Expr::FalseLiteral);
             } else {
                 self.error(self.previous(), "Expected boolean");
                 return Err(());
@@ -133,8 +133,8 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::True]) {
-            if let Some(Literal::Bool(b)) = self.previous().literal {
-                return Ok(Expr::BoolLiteral(b));
+            if let Some(Literal::True) = self.previous().literal {
+                return Ok(Expr::TrueLiteral);
             } else {
                 self.error(self.previous(), "Expected boolean");
                 return Err(());

@@ -10,6 +10,7 @@ pub enum Stmt {
 
 #[derive(Debug)]
 pub enum Expr {
+    Assignment(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
     Identifier(String),
@@ -19,12 +20,16 @@ pub enum Expr {
     NumberLiteral(f64),
     StringLiteral(String),
     Unary(Token, Box<Expr>),
+    Variable(Token),
 }
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _ = write!(f, "{}", "(");
         match &*self {
+            Expr::Assignment(name, value) => {
+                let _ = write!(f, "{} = {}", name, value);
+            }
             Expr::Binary(left, op, right) => {
                 let _ = write!(f, "{} {} {}", op, left, right);
             }

@@ -1,4 +1,4 @@
-use super::ast::Expr;
+use super::ast::{Expr, Stmt};
 use super::error::{error, ErrorKind};
 use super::token::{Literal, Token, TokenType};
 
@@ -16,23 +16,112 @@ impl Parser {
     }
 
     /*
-    expression     → equality | let binding ;
+    program        -> statement* EOF ;
+
+    declaration    -> varDecl
+                    | statement ;
+
+    statement      -> exprStmt
+                    | printStmt ;
+
+    exprStmt       -> expression ";" ;
+    printStmt      -> "print" expression ";" ;
+
+    varDecl        -> "var" identifier ( "=" expression )? ";" ;
+    expression     -> assignment ;
+    assignment     → identifier "=" assignment
+                    | equality
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     let binding    -> identifier "=" expression ;
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
     factor         → unary ( ( "/" | "*" ) unary )* ;
     unary          → ( "!" | "-" ) unary
-                | primary ;
+                    | primary ;
+
     primary        → NUMBER | STRING | "true" | "false" | "nil"
-                | "(" expression ")" ;
+                    | "(" expression ")"
+                    | identifier ;
     */
-    pub fn parse(&mut self) -> Result<Expr, ()> {
-        self.expression()
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, ()> {
+        let mut stmts = Vec::new();
+        while !self.at_end() {
+            stmts.push(self.declaration()?);
+        }
+        Ok(stmts)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, ()> {
+        if self.match_token(vec![TokenType::Var]) {
+            if let Ok(var_decl) = self.var_declaration() {
+                return Ok(var_decl);
+            }
+        }
+        self.statement().or_else(|_| {
+            self.synchronize();
+            Err(())
+        })
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, ()> {
+        self.consume(TokenType::Identifier, "Expect variable name.");
+        let name = self.previous();
+
+        let mut initializer = None;
+        if self.match_token(vec![TokenType::Equal]) {
+            initializer = Some(self.expression()?);
+        }
+
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        );
+
+        Ok(Stmt::VarDeclaration(name, initializer))
+    }
+
+    fn statement(&mut self) -> Result<Stmt, ()> {
+        if self.match_token(vec![TokenType::Print]) {
+            return self.print_stmt();
+        }
+
+        self.expression_statement()
+    }
+
+    fn print_stmt(&mut self) -> Result<Stmt, ()> {
+        let value = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ';' after value.");
+        Ok(Stmt::Print(value?))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, ()> {
+        let expr = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.");
+        Ok(Stmt::ExprStmt(expr?))
     }
 
     fn expression(&mut self) -> Result<Expr, ()> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, ()> {
+        let expr = self.equality()?;
+
+        if self.match_token(vec![TokenType::Equal]) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+
+            match expr {
+                Expr::Variable(name) => {
+                    return Ok(Expr::Assignment(name, Box::new(value)));
+                }
+                _ => self.error(equals, "Invalid assignment target"),
+            }
+        }
+
+        Ok(expr)
+    }
+
     }
 
     fn equality(&mut self) -> Result<Expr, ()> {
@@ -140,12 +229,7 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::Identifier]) {
-            if let Some(Literal::Identifier(s)) = self.previous().literal {
-                return Ok(Expr::Identifier(s));
-            } else {
-                self.error(self.previous(), "Expected identifier");
-                return Err(());
-            }
+            return Ok(Expr::Variable(self.previous()));
         }
 
         if self.match_token(vec![TokenType::LeftParen]) {

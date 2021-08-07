@@ -6,6 +6,7 @@ pub enum Stmt {
     ExprStmt(Expr),
     Print(Expr),
     VarDeclaration(Token, Option<Expr>),
+    Block(Vec<Stmt>),
 }
 
 #[derive(Debug)]

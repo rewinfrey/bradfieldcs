@@ -22,10 +22,12 @@ impl Parser {
                     | statement ;
 
     statement      -> exprStmt
-                    | printStmt ;
+                    | printStmt
+                    | block ;
 
     exprStmt       -> expression ";" ;
     printStmt      -> "print" expression ";" ;
+    block          -> "{" declaration* "}" ;
 
     varDecl        -> "var" identifier ( "=" expression )? ";" ;
     expression     -> assignment ;
@@ -85,7 +87,23 @@ impl Parser {
             return self.print_stmt();
         }
 
+        if self.match_token(vec![TokenType::LeftBrace]) {
+            let block = self.block();
+            return block;
+        }
+
         self.expression_statement()
+    }
+
+    fn block(&mut self) -> Result<Stmt, ()> {
+        let mut stmts = Vec::new();
+
+        while !self.check(TokenType::RightBrace) {
+            stmts.push(self.declaration()?);
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block.");
+        Ok(Stmt::Block(stmts))
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, ()> {

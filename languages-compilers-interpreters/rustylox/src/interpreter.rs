@@ -115,6 +115,16 @@ impl Interpreter<Value> {
                 self.environment.define(&name.lexeme, value);
                 Ok(Value::Nil)
             }
+            Stmt::Block(stmts) => {
+                let env = self.environment.clone();
+
+                for stmt in stmts {
+                    let _ = self.evaluate_stmt(&stmt);
+                }
+
+                self.environment = env.clone();
+                Ok(Value::Nil)
+            }
         }
     }
 }

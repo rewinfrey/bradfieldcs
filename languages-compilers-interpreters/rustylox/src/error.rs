@@ -4,6 +4,7 @@ pub enum ErrorKind {
     ReadFileError,
     ParseError,
     EvaluatorError,
+    RuntimeError,
 }
 
 impl std::fmt::Display for ErrorKind {
@@ -13,6 +14,7 @@ impl std::fmt::Display for ErrorKind {
             ErrorKind::ReadFileError => "ReadFileError",
             ErrorKind::ParseError => "ParseError",
             ErrorKind::EvaluatorError => "EvaluatorError",
+            ErrorKind::RuntimeError => "RuntimeError",
         };
         write!(f, "Error: {}", error_kind)
     }
@@ -27,13 +29,15 @@ struct Error {
 }
 
 pub fn error(line: u32, start: u32, end: u32, message: String, kind: ErrorKind) {
-    report(Error {
+    let e = Error {
         line,
         start,
         end,
         message,
         kind,
-    });
+    };
+
+    report(e);
 }
 
 fn report(err: Error) {

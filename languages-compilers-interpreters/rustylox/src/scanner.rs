@@ -149,6 +149,7 @@ impl<'a> Scanner<'a> {
         match token_type {
             TokenType::True => self.add_token(token_type, Some(Literal::True)),
             TokenType::False => self.add_token(token_type, Some(Literal::False)),
+            TokenType::Var => self.add_token(token_type, None),
             _ => self.add_token(
                 token_type,
                 Some(Literal::Identifier(self.substring().to_string())),

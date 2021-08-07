@@ -2,6 +2,13 @@ use super::token::Token;
 use std::fmt;
 
 #[derive(Debug)]
+pub enum Stmt {
+    ExprStmt(Expr),
+    Print(Expr),
+    VarDeclaration(Token, Option<Expr>),
+}
+
+#[derive(Debug)]
 pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
@@ -44,6 +51,9 @@ impl fmt::Display for Expr {
             }
             Expr::Identifier(s) => {
                 let _ = write!(f, "{}", s);
+            }
+            Expr::Variable(identifier) => {
+                let _ = write!(f, "{}", identifier);
             }
         }
         write!(f, "{}", ")")

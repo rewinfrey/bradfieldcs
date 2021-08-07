@@ -24,7 +24,7 @@ mod token;
 mod value;
 
 fn run_file(path: &Path) -> Result<(), ErrorKind> {
-    let env = Environment::<Value>::new();
+    let env = Environment::<Value>::new(None);
     let mut interpreter = Interpreter::new(env);
     match fs::read_to_string(&path) {
         Ok(source) => {
@@ -47,7 +47,7 @@ fn run_file(path: &Path) -> Result<(), ErrorKind> {
 fn run_repl() {
     let stdin = stdin();
     let mut stdout = stdout();
-    let env = Environment::<Value>::new();
+    let env = Environment::<Value>::new(None);
     let mut interpreter = &mut Interpreter::new(env);
 
     loop {
@@ -103,7 +103,7 @@ fn run(source: String, interpreter: &mut Interpreter<Value>) -> &mut Interpreter
 
 fn run_ast() {
     // -123 * 45.67
-    let env = Environment::<Value>::new();
+    let env = Environment::<Value>::new(None);
     let expr = Stmt::ExprStmt(Expr::Binary(
         Box::new(Expr::Unary(
             Token::new(TokenType::Minus, String::from("-"), 0, 0, None),

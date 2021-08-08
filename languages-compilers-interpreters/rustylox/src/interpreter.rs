@@ -161,6 +161,14 @@ impl Interpreter<Value> {
                     Ok(Value::Nil)
                 }
             }
+            Stmt::While(condition, body) => {
+                let mut condition_result = self.evaluate_expr(condition)?;
+                while self.is_truthy(&condition_result) {
+                    let _ = self.evaluate_stmt(body);
+                    condition_result = self.evaluate_expr(condition)?;
+                }
+                Ok(Value::Nil)
+            }
         }
     }
 }

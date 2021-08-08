@@ -24,13 +24,15 @@ impl Parser {
     statement      -> exprStmt
                     | printStmt
                     | block
-                    | ifStmt ;
+                    | ifStmt
+                    | whileStmt ;
 
     exprStmt       -> expression ";" ;
     printStmt      -> "print" expression ";" ;
     block          -> "{" declaration* "}" ;
     ifStmt         -> "if" "(" expression ")" statement
                     ( "else" statement )? ;
+    whileStmt      -> "while" "(" expression ")" statement ;
 
     varDecl        -> "var" identifier ( "=" expression )? ";" ;
     expression     -> assignment ;
@@ -97,6 +99,10 @@ impl Parser {
             return self.print_stmt();
         }
 
+        if self.match_token(vec![TokenType::While]) {
+            return self.while_stmt();
+        }
+
         if self.match_token(vec![TokenType::LeftBrace]) {
             let block = self.block();
             return block;
@@ -117,6 +123,14 @@ impl Parser {
             else_branch = Some(Box::new(self.statement()?));
         }
         Ok(Stmt::IfStmt(condition, then_branch, else_branch))
+    }
+
+    fn while_stmt(&mut self) -> Result<Stmt, ()> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'while'.");
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after condition.");
+        let body = Box::new(self.statement()?);
+        Ok(Stmt::While(condition, body))
     }
 
     fn block(&mut self) -> Result<Stmt, ()> {

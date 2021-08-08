@@ -22,6 +22,14 @@ impl Interpreter<Value> {
         Ok(result)
     }
 
+    pub fn is_truthy(&self, value: Value) -> bool {
+        match value {
+            Value::Nil => false,
+            Value::False => false,
+            _ => true,
+        }
+    }
+
     fn evaluate_expr(&mut self, expr: &Expr) -> Result<Value, ()> {
         match expr {
             Expr::Assignment(name, value) => {
@@ -124,6 +132,16 @@ impl Interpreter<Value> {
 
                 self.environment = env.clone();
                 Ok(Value::Nil)
+            }
+            Stmt::IfStmt(condition, then_branch, else_branch) => {
+                let condition_result = self.evaluate_expr(condition)?;
+                if self.is_truthy(condition_result) {
+                    return self.evaluate_stmt(then_branch);
+                } else if let Some(else_branch) = else_branch {
+                    return self.evaluate_stmt(else_branch);
+                } else {
+                    Ok(Value::Nil)
+                }
             }
         }
     }

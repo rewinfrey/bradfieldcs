@@ -7,6 +7,7 @@ pub enum Stmt {
     Print(Expr),
     VarDeclaration(Token, Option<Expr>),
     Block(Vec<Stmt>),
+    IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
 }
 
 #[derive(Debug)]

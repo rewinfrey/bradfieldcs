@@ -23,11 +23,14 @@ impl Parser {
 
     statement      -> exprStmt
                     | printStmt
-                    | block ;
+                    | block
+                    | ifStmt ;
 
     exprStmt       -> expression ";" ;
     printStmt      -> "print" expression ";" ;
     block          -> "{" declaration* "}" ;
+    ifStmt         -> "if" "(" expression ")" statement
+                    ( "else" statement )? ;
 
     varDecl        -> "var" identifier ( "=" expression )? ";" ;
     expression     -> assignment ;
@@ -83,6 +86,10 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, ()> {
+        if self.match_token(vec![TokenType::If]) {
+            return self.if_stmt();
+        }
+
         if self.match_token(vec![TokenType::Print]) {
             return self.print_stmt();
         }
@@ -93,6 +100,20 @@ impl Parser {
         }
 
         self.expression_statement()
+    }
+
+    fn if_stmt(&mut self) -> Result<Stmt, ()> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'if'.");
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after condition.");
+
+        let then_branch = Box::new(self.statement()?);
+        let mut else_branch = None;
+
+        if self.match_token(vec![TokenType::Else]) {
+            else_branch = Some(Box::new(self.statement()?));
+        }
+        Ok(Stmt::IfStmt(condition, then_branch, else_branch))
     }
 
     fn block(&mut self) -> Result<Stmt, ()> {

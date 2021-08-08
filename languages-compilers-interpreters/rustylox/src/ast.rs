@@ -23,6 +23,7 @@ pub enum Expr {
     StringLiteral(String),
     Unary(Token, Box<Expr>),
     Variable(Token),
+    Logical(Box<Expr>, Token, Box<Expr>),
 }
 
 impl fmt::Display for Expr {
@@ -61,6 +62,9 @@ impl fmt::Display for Expr {
             }
             Expr::Variable(identifier) => {
                 let _ = write!(f, "{}", identifier);
+            }
+            Expr::Logical(lhs, op, rhs) => {
+                let _ = write!(f, "{} {} {}", lhs, op, rhs);
             }
         }
         write!(f, "{}", ")")

@@ -35,8 +35,11 @@ impl Parser {
     varDecl        -> "var" identifier ( "=" expression )? ";" ;
     expression     -> assignment ;
     assignment     → identifier "=" assignment
-                    | equality
+                    | logic_or ;
+    logic_or       -> logic_and ( "or" logic_and )* ;
+    logic_and      -> equality ( "and" equality )* ;
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+
     let binding    -> identifier "=" expression ;
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
@@ -143,8 +146,32 @@ impl Parser {
         self.assignment()
     }
 
+    fn and(&mut self) -> Result<Expr, ()> {
+        let mut expr = self.equality()?;
+
+        while self.match_token(vec![TokenType::And]) {
+            let operator = self.previous();
+            let right = self.equality()?;
+            expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expr, ()> {
+        let mut expr = self.and()?;
+
+        while self.match_token(vec![TokenType::Or]) {
+            let operator = self.previous();
+            let right = self.and()?;
+            expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
+        }
+
+        Ok(expr)
+    }
+
     fn assignment(&mut self) -> Result<Expr, ()> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
 
         if self.match_token(vec![TokenType::Equal]) {
             let equals = self.previous();

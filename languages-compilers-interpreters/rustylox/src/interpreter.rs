@@ -22,7 +22,7 @@ impl Interpreter<Value> {
         Ok(result)
     }
 
-    pub fn is_truthy(&self, value: Value) -> bool {
+    pub fn is_truthy(&self, value: &Value) -> bool {
         match value {
             Value::Nil => false,
             Value::False => false,
@@ -95,6 +95,24 @@ impl Interpreter<Value> {
                 }
                 Err(())
             }
+            Expr::Logical(left, op, right) => {
+                let left_result = self.evaluate_expr(left)?;
+                match op.token_type {
+                    TokenType::Or => {
+                        if self.is_truthy(&left_result) {
+                            return Ok(left_result);
+                        }
+                    }
+                    _ => {
+                        if !self.is_truthy(&left_result) {
+                            return Ok(left_result);
+                        }
+                    }
+                }
+
+                let right_result = self.evaluate_expr(right)?;
+                Ok(right_result)
+            }
             _ => {
                 error(
                     0,
@@ -135,7 +153,7 @@ impl Interpreter<Value> {
             }
             Stmt::IfStmt(condition, then_branch, else_branch) => {
                 let condition_result = self.evaluate_expr(condition)?;
-                if self.is_truthy(condition_result) {
+                if self.is_truthy(&condition_result) {
                     self.evaluate_stmt(then_branch)
                 } else if let Some(else_branch) = else_branch {
                     self.evaluate_stmt(else_branch)

@@ -3,6 +3,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum Stmt {
+    Break,
     ExprStmt(Expr),
     Print(Expr),
     VarDeclaration(Token, Option<Expr>),

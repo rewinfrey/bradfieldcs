@@ -18,6 +18,7 @@ pub struct Scanner<'a> {
 
 pub fn default_reserved<'a>() -> HashMap<&'static str, TokenType> {
     let mut reserved = HashMap::new();
+    reserved.insert("break", TokenType::Break);
     reserved.insert("if", TokenType::If);
     reserved.insert("and", TokenType::And);
     reserved.insert("class", TokenType::Class);

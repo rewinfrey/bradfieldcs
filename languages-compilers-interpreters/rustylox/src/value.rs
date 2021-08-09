@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 #[derive(Clone, Debug, Display)]
 pub enum Value {
+    Break,
     Nil,
     True,
     False,

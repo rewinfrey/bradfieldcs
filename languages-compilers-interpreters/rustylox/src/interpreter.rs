@@ -157,11 +157,18 @@ impl Interpreter<Value> {
                 self.environment.define(&name.lexeme, value);
                 Ok(Value::Nil)
             }
+            Stmt::Break => Ok(Value::Break),
             Stmt::Block(stmts) => {
                 self.environment = Environment::new(Some(Box::new(self.environment.clone())));
-
-                for stmt in stmts {
-                    let _ = self.evaluate_stmt(&stmt);
+                let mut result = Ok(Value::Nil);
+                'outer: for stmt in stmts {
+                    match self.evaluate_stmt(stmt) {
+                        v @ Ok(Value::Break) => {
+                            result = v;
+                            break 'outer;
+                        }
+                        _ => {}
+                    }
                 }
 
                 self.environment = match self.environment.enclosing.clone() {
@@ -169,7 +176,7 @@ impl Interpreter<Value> {
                     None => panic!("The impossible happened."),
                 };
 
-                Ok(Value::Nil)
+                result
             }
             Stmt::IfStmt(condition, then_branch, else_branch) => {
                 if Interpreter::is_truthy(&self.evaluate_expr(condition)?) {
@@ -182,7 +189,10 @@ impl Interpreter<Value> {
             }
             Stmt::While(condition, body) => {
                 while Interpreter::is_truthy(&self.evaluate_expr(condition)?) {
-                    let _ = self.evaluate_stmt(body);
+                    match self.evaluate_stmt(body) {
+                        Ok(Value::Break) => break,
+                        _ => {}
+                    }
                 }
                 Ok(Value::Nil)
             }

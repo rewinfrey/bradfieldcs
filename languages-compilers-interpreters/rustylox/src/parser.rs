@@ -5,6 +5,7 @@ use super::token::{Literal, Token, TokenType};
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    loop_depth: usize,
 }
 
 impl Parser {
@@ -12,6 +13,7 @@ impl Parser {
         Parser {
             tokens: tokens,
             current: 0,
+            loop_depth: 0,
         }
     }
 
@@ -32,7 +34,7 @@ impl Parser {
     block          -> "{" declaration* "}" ;
     ifStmt         -> "if" "(" expression ")" statement
                     ( "else" statement )? ;
-    whileStmt      -> "while" "(" expression ")" statement ;
+    whileStmt      -> "while" "(" expression ")" statement | break;
 
     varDecl        -> "var" identifier ( "=" expression )? ";" ;
     expression     -> assignment ;
@@ -91,6 +93,20 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, ()> {
+        if self.match_token(vec![TokenType::Break]) {
+            if self.loop_depth < 1 {
+                error(
+                    self.previous().line,
+                    self.previous().column,
+                    self.previous().column,
+                    String::from("Must be inside loop to use 'break' statement."),
+                    ErrorKind::ParseError,
+                );
+            }
+            self.consume(TokenType::Semicolon, "Expect ';' after 'break'.");
+            return Ok(Stmt::Break);
+        }
+
         if self.match_token(vec![TokenType::For]) {
             return self.for_stmt();
         }
@@ -108,8 +124,7 @@ impl Parser {
         }
 
         if self.match_token(vec![TokenType::LeftBrace]) {
-            let block = self.block();
-            return block;
+            return self.block();
         }
 
         self.expression_statement()
@@ -134,11 +149,12 @@ impl Parser {
         self.consume(TokenType::Semicolon, "Expect ';' after loop condition.");
 
         let mut increment = None;
-        if !self.check(TokenType::Semicolon) {
+        if !self.check(TokenType::RightParen) {
             increment = Some(self.expression()?);
         }
         self.consume(TokenType::RightParen, "Expect ')' after loop increment.");
 
+        self.loop_depth += 1;
         let mut body = self.statement()?;
         if let Some(increment) = increment {
             body = Stmt::Block(vec![body, Stmt::ExprStmt(increment)]);
@@ -149,6 +165,7 @@ impl Parser {
             Some(expr) => Stmt::While(expr, Box::new(body)),
         };
 
+        self.loop_depth -= 1;
         match initializer {
             None => Ok(body),
             Some(expr) => Ok(Stmt::Block(vec![expr, body])),
@@ -173,7 +190,9 @@ impl Parser {
         self.consume(TokenType::LeftParen, "Expect '(' after 'while'.");
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expect ')' after condition.");
+        self.loop_depth += 1;
         let body = Box::new(self.statement()?);
+        self.loop_depth -= 1;
         Ok(Stmt::While(condition, body))
     }
 

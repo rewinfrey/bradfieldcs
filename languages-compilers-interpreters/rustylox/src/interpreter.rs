@@ -158,13 +158,17 @@ impl Interpreter<Value> {
                 Ok(Value::Nil)
             }
             Stmt::Block(stmts) => {
-                let env = self.environment.clone();
+                self.environment = Environment::new(Some(Box::new(self.environment.clone())));
 
                 for stmt in stmts {
                     let _ = self.evaluate_stmt(&stmt);
                 }
 
-                self.environment = env.clone();
+                self.environment = match self.environment.enclosing.clone() {
+                    Some(env) => *env,
+                    None => panic!("The impossible happened."),
+                };
+
                 Ok(Value::Nil)
             }
             Stmt::IfStmt(condition, then_branch, else_branch) => {

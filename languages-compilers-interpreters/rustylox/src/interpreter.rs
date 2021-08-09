@@ -22,7 +22,7 @@ impl Interpreter<Value> {
         Ok(result)
     }
 
-    pub fn is_truthy(&self, value: &Value) -> bool {
+    pub fn is_truthy(value: &Value) -> bool {
         match value {
             Value::Nil => false,
             Value::False => false,
@@ -47,6 +47,22 @@ impl Interpreter<Value> {
                     TokenType::Minus => Ok(Value::Number(l_result.unwrap() - r_result.unwrap())),
                     TokenType::Star => Ok(Value::Number(l_result.unwrap() * r_result.unwrap())),
                     TokenType::Slash => Ok(Value::Number(l_result.unwrap() / r_result.unwrap())),
+                    TokenType::BangEqual => Ok(match l_result.unwrap() != r_result.unwrap() {
+                        true => Value::True,
+                        false => Value::False,
+                    }),
+                    TokenType::EqualEqual => Ok(match l_result.unwrap() == r_result.unwrap() {
+                        true => Value::True,
+                        false => Value::False,
+                    }),
+                    TokenType::Less => Ok(match l_result.unwrap() < r_result.unwrap() {
+                        true => Value::True,
+                        false => Value::False,
+                    }),
+                    TokenType::LessEqual => Ok(match l_result.unwrap() <= r_result.unwrap() {
+                        true => Value::True,
+                        false => Value::False,
+                    }),
                     _ => {
                         error(
                             op.line,
@@ -99,12 +115,12 @@ impl Interpreter<Value> {
                 let left_result = self.evaluate_expr(left)?;
                 match op.token_type {
                     TokenType::Or => {
-                        if self.is_truthy(&left_result) {
+                        if Interpreter::is_truthy(&left_result) {
                             return Ok(left_result);
                         }
                     }
                     _ => {
-                        if !self.is_truthy(&left_result) {
+                        if !Interpreter::is_truthy(&left_result) {
                             return Ok(left_result);
                         }
                     }
@@ -152,8 +168,7 @@ impl Interpreter<Value> {
                 Ok(Value::Nil)
             }
             Stmt::IfStmt(condition, then_branch, else_branch) => {
-                let condition_result = self.evaluate_expr(condition)?;
-                if self.is_truthy(&condition_result) {
+                if Interpreter::is_truthy(&self.evaluate_expr(condition)?) {
                     self.evaluate_stmt(then_branch)
                 } else if let Some(else_branch) = else_branch {
                     self.evaluate_stmt(else_branch)
@@ -162,10 +177,8 @@ impl Interpreter<Value> {
                 }
             }
             Stmt::While(condition, body) => {
-                let mut condition_result = self.evaluate_expr(condition)?;
-                while self.is_truthy(&condition_result) {
+                while Interpreter::is_truthy(&self.evaluate_expr(condition)?) {
                     let _ = self.evaluate_stmt(body);
-                    condition_result = self.evaluate_expr(condition)?;
                 }
                 Ok(Value::Nil)
             }

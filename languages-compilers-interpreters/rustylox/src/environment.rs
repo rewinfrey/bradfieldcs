@@ -21,7 +21,7 @@ impl Environment<Value> {
     }
 
     pub fn assign(&mut self, name: &String, value: Value) {
-        if let Some(_) = self.get(name.as_str()) {
+        if let Some(_) = self.values.get(name.as_str()) {
             self.values.insert(name.clone(), value.clone());
             return;
         }

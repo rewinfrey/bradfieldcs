@@ -7,6 +7,7 @@ use super::value::Value;
 #[derive(Clone, Debug)]
 pub struct Interpreter<T> {
     pub environment: Environment<T>,
+    pub globals: Environment<T>,
 }
 
 impl Interpreter<Value> {

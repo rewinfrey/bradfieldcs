@@ -11,7 +11,10 @@ pub struct Interpreter<T> {
 
 impl Interpreter<Value> {
     pub fn new(env: Environment<Value>) -> Interpreter<Value> {
-        Interpreter { environment: env }
+        Interpreter {
+            environment: env,
+            globals: Environment::new(None),
+        }
     }
 
     pub fn evaluate(&mut self, stmts: &Vec<Stmt>) -> Result<Value, ()> {

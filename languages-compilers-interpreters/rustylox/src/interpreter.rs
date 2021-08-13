@@ -75,6 +75,15 @@ impl Interpreter<Value> {
                     }
                 }
             }
+            Expr::Call(callee, paren, args) => {
+                let callee = self.evaluate_expr(&*callee)?;
+                let mut args_result = Vec::new();
+                for arg in args {
+                    args_result.push(self.evaluate_expr(&*arg)?);
+                }
+
+                Err(())
+            }
             Expr::Grouping(expr) => self.evaluate_expr(&*expr),
             Expr::TrueLiteral => Ok(Value::True),
             Expr::FalseLiteral => Ok(Value::False),

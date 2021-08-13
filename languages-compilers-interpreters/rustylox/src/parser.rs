@@ -48,8 +48,10 @@ impl Parser {
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
     factor         → unary ( ( "/" | "*" ) unary )* ;
-    unary          → ( "!" | "-" ) unary
-                    | primary ;
+    unary          → ( "!" | "-" ) unary | call ;
+
+    call           -> primary ( "(" arguments? ")" )* ;
+    arguments      -> expression ( "," expression )* ;
 
     primary        → NUMBER | STRING | "true" | "false" | "nil"
                     | "(" expression ")"
@@ -327,7 +329,49 @@ impl Parser {
             return Ok(Expr::Unary(operator, Box::new(right?)));
         }
 
-        self.primary()
+        self.call()
+    }
+
+    fn call(&mut self) -> Result<Expr, ()> {
+        let mut expr = self.primary();
+
+        loop {
+            if self.match_token(vec![TokenType::LeftParen]) {
+                expr = self.finish_call(&expr?);
+            } else {
+                break;
+            }
+        }
+
+        expr
+    }
+
+    fn finish_call(&mut self, callee: &Expr) -> Result<Expr, ()> {
+        let mut args = Vec::new();
+
+        if !self.match_token(vec![TokenType::RightParen]) {
+            loop {
+                if args.len() > 255 {
+                    let next = self.peek();
+                    error(
+                        next.line,
+                        next.column,
+                        next.column,
+                        String::from("Can't have more than 255 arguments."),
+                        ErrorKind::ParseError,
+                    );
+                }
+                args.push(self.expression()?);
+                if !self.match_token(vec![TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(TokenType::RightParen, "Expect ')' after arguments.");
+        let paren = self.previous();
+
+        return Ok(Expr::Call(Box::new(callee.clone()), paren, args));
     }
 
     fn primary(&mut self) -> Result<Expr, ()> {

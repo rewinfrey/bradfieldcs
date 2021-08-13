@@ -12,10 +12,11 @@ pub enum Stmt {
     While(Expr, Box<Stmt>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Assignment(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
+    Call(Box<Expr>, Token, Vec<Expr>),
     Grouping(Box<Expr>),
     Identifier(String),
     TrueLiteral,
@@ -67,6 +68,9 @@ impl fmt::Display for Expr {
             }
             Expr::Logical(lhs, op, rhs) => {
                 let _ = write!(f, "{} {} {}", lhs, op, rhs);
+            }
+            Expr::Call(callee, _, args) => {
+                let _ = write!(f, "{}({:?})", callee, args);
             }
         }
         write!(f, "{}", ")")
